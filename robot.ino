@@ -20,8 +20,8 @@ int diod3Pin = A5;
 int diod4Pin = A5;
 
 bool collecting = true;
-int collectedPoints = 0;
-int numberOfCollections = 5;
+int collectedPointSets = 0;
+int numberOfCollections = 10;
 int numDataPoints = numberOfCollections * 4;
 double** dataPoints;
 
@@ -42,23 +42,30 @@ void setup() {
   digitalWrite(diod3Pin, HIGH);
   digitalWrite(diod4Pin, HIGH);
 
-  // dataPoints = (double**)calloc(numDataPoints, sizeof(double*));
-  // for (int i = 0; i < numDataPoints; i++)
-  // {
-  //   dataPoints[i] = (double*) calloc(1, sizeof(double));
-  // }
-  dataPoints = (double **)malloc(numDataPoints * sizeof(double *));
-  for (int i = 0; i < numDataPoints; i++) {
-    dataPoints[i] = (double *)malloc(1 * sizeof(double));    
+  dataPoints = (double**)calloc(numDataPoints, sizeof(double*));
+  for (int i = 0; i < numDataPoints; i++)
+  {
+    dataPoints[i] = (double*) calloc(1, sizeof(double));
   }
+
+  // Serial.println(dataPoints[0][0]);
+  // Serial.println(dataPoints[numDataPoints - 1][0]);
+
+  // dataPoints = (double **)malloc(numDataPoints * sizeof(double *));
+  // for (int i = 0; i < numDataPoints; i++) {
+  //   dataPoints[i] = (double *)malloc(1 * sizeof(double));    
+  // }
+  // Serial.println(dataPoints[0][0]);
+  // Serial.println(dataPoints[numDataPoints - 1][0]);
   Serial.println("Car initialized, ready to go!");
+  delay(1000);
 }
 
 void loop() {
-  if (collecting && collectedPoints <= numberOfCollections) {
+  if (collecting && collectedPointSets <= numberOfCollections) {
     /*driveRandom();*/
     collectIntialData();
-    collectedPoints++;
+    collectedPointSets++;
   } else if (collecting) {
     computeMeans();
     collecting = false;
@@ -161,25 +168,36 @@ void setMotorRight(int speed, int direction) {
 void computeMeans() {
   int dimension = 1;
   int clusters = 3;
-  double errorTolerance = 0.01;
+  double errorTolerance = 1;
   double** centroids = (double**)calloc(clusters, sizeof(double*));
 
+  Serial.println(dataPoints[0][0]);
+  Serial.println(dataPoints[numDataPoints - 1][0]);
+
   int* labels = k_means(dataPoints, numDataPoints, dimension, clusters, errorTolerance, centroids);
-  for (int i = 0; i < numDataPoints; i++) {
-    char string[100];
-    sprintf(string, "data point %f is in cluster %f\n", (float)dataPoints[i][0], (float)labels[i]);
-    Serial.println(string);
-  }
+  Serial.println("first:");
+  Serial.println((float)dataPoints[0][0]);
+  Serial.println(labels[0]);
+  Serial.println("last");
+  Serial.println(dataPoints[numDataPoints - 1][0]);
+  Serial.println(labels[numDataPoints - 1]);
+
+  // for (int i = 0; i < numDataPoints; i++) {
+  //   char string[100];
+  //   sprintf(string, "data point %f is in cluster %f\n", (float)dataPoints[i][0], (float)labels[i]);
+  //   Serial.println(string);
+  // }
   free(labels); 
   free(centroids);
 }
 
 void collectIntialData() {
   int* values = getSensorValues();
-  // dataPoints[collectedPoints][0] = (double) values[0];
-  // dataPoints[collectedPoints + 1][0] = (double) values[1];
-  // dataPoints[collectedPoints + 2][0] = (double) values[2];
-  // dataPoints[collectedPoints + 3][0] = (double) values[3];
+  int collectedPoints = collectedPointSets * 4;
+  dataPoints[collectedPoints][0] = (double) values[0];
+  dataPoints[collectedPoints + 1][0] = (double) values[1];
+  dataPoints[collectedPoints + 2][0] = (double) values[2];
+  dataPoints[collectedPoints + 3][0] = (double) values[3];
 }
 
 int* getSensorValues() {
